@@ -34,7 +34,7 @@ function getClusterUrl(chain: string): string {
 
 function getConnection(): Connection {
     let url = process.env.SOLANA_RPC;
-    let chain: string = process.env.CHAIN ?? 'devnet';
+    const chain: string = process.env.CHAIN ?? 'devnet';
 
     if (url) {
         url = url.startsWith('http') ? url : getClusterUrl(chain);
@@ -69,7 +69,7 @@ function validatedQueryAndGetParams(requestUrl: URL) {
 
     if (!pubKey) throw Error("Public key not defined on your env");
 
-    let toPubkey: PublicKey = new PublicKey(
+    const toPubkey: PublicKey = new PublicKey(
         pubKey,
     );
 
@@ -83,6 +83,7 @@ function validatedQueryAndGetParams(requestUrl: URL) {
         if (amount <= 0.02) throw 'amount is too small';
 
     } catch (err) {
+        console.log("Error: ", err);
         throw 'Invalid input query parameter: amount';
     }
 
@@ -93,6 +94,7 @@ function validatedQueryAndGetParams(requestUrl: URL) {
 }
 
 export const GET = async (req: Request) => {
+    console.log("REQ URl: " + req.url);
     const payload: ActionGetResponse = {
         title: "JBQNETO - Doar SOL",
         icon: ICON_URL,
@@ -147,6 +149,7 @@ export const POST = async (req: Request) => {
         try {
             account = new PublicKey(body.account);
         } catch (err) {
+            console.log("Error creating publicKey: ", err);
             return new Response('Invalid "account" provided', {
                 status: 400,
                 headers: getHeaders(),
