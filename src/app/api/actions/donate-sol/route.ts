@@ -1,4 +1,5 @@
 import {
+    ActionError,
     ActionGetResponse,
     ActionPostRequest,
     ActionPostResponse,
@@ -18,8 +19,18 @@ function getHeaders() {
     });
 }
 
+const headers = getHeaders();
+
 //https://ibb.co/R3jvp8t
 const ICON_URL = 'https://i.ibb.co/McB2DdK/cartoon-donate-sol-please.jpg';
+
+function getPublicKey(): PublicKey {
+    const pubKey = process.env.PUB_KEY;
+
+    if (!pubKey) throw Error("Public key not defined on your env");
+
+    return new PublicKey(pubKey);
+}
 
 function getClusterUrl(chain: string): string {
     switch (chain) {
@@ -65,13 +76,7 @@ async function getTransaction(conn: Connection, from: PublicKey, amount: number,
 }
 
 function validatedQueryAndGetParams(requestUrl: URL) {
-    const pubKey = process.env.PUB_KEY;
-
-    if (!pubKey) throw Error("Public key not defined on your env");
-
-    const toPubkey: PublicKey = new PublicKey(
-        pubKey,
-    );
+    const toPubkey = getPublicKey();
 
     let amount: number = 0.02;
 
@@ -95,45 +100,66 @@ function validatedQueryAndGetParams(requestUrl: URL) {
 
 export const GET = async (req: Request) => {
     console.log("REQ URl: " + req.url);
-    const payload: ActionGetResponse = {
-        title: "JBQNETO - Doar SOL",
-        icon: ICON_URL,
-        description: "Me dê um pouquinho de SOL pra eu tomar meu café.",
-        label: "Doar SOL",
-        "links": {
-            "actions": [
-                {
-                    "label": "0.02 SOL", // button text
-                    "href": "/api/donate?amount=0.02"
-                    // no `parameters` therefore not a text input field
-                },
-                {
-                    "label": "0.05 SOL", // button text
-                    "href": "/api/donate?amount=0.05"
-                    // no `parameters` therefore not a text input field
-                },
-                {
-                    "label": "0.1 SOL", // button text
-                    "href": "/api/donate?amount=0.1"
-                    // no `parameters` therefore not a text input field
-                },
-                {
-                    "label": "Donate", // button text
-                    "href": "/api/donate?amount={amount}",
-                    "parameters": [
-                        {
-                            "name": "amount", // field name
-                            "label": "Doe o quanto o seu coração mandar e sua wallet deixar :)" // text input placeholder
-                        }
-                    ]
-                }
-            ]
-        },
-    };
 
-    return Response.json(payload, {
-        headers: getHeaders(),
-    });
+    try {
+        const requestUrl = new URL(req.url);
+        const toPubkey = getPublicKey();
+
+        const baseHref = new URL(
+            `/api/actions/donate-sol?`,
+            requestUrl.origin,
+        ).toString();
+
+        const payload: ActionGetResponse = {
+            title: "JBQNETO - Doar SOL",
+            icon: ICON_URL,
+            description: "Me dê um pouquinho de SOL pra eu tomar meu café.",
+            label: "Doar SOL",
+            links: {
+                actions: [
+                    {
+                        "label": "0.02 SOL", // button text
+                        "href": baseHref + "amount=0.02"
+                        // no `parameters` therefore not a text input field
+                    },
+                    {
+                        "label": "0.05 SOL", // button text
+                        "href": baseHref + "amount=0.05"
+                        // no `parameters` therefore not a text input field
+                    },
+                    {
+                        "label": "0.1 SOL", // button text
+                        "href": baseHref + "amount=0.1"
+                        // no `parameters` therefore not a text input field
+                    },
+                    {
+                        "label": "Donate", // button text
+                        "href": baseHref + "amount={amount}",
+                        "parameters": [
+                            {
+                                "name": "amount", // field name
+                                "label": "Doe o quanto o seu coração mandar e sua wallet deixar :)" // text input placeholder
+                            }
+                        ]
+                    }
+                ]
+            },
+        };
+
+        return Response.json(payload, {
+            headers,
+        });
+
+    } catch (err) {
+        console.error("Error getting request:", err);
+        let actionError: ActionError = { message: "An unknown error occurred" };
+        if (typeof err == "string") actionError.message = err;
+        return Response.json(actionError, {
+            status: 400,
+            headers,
+        });
+    }
+
 }
 
 export const OPTIONS = GET;
@@ -152,7 +178,7 @@ export const POST = async (req: Request) => {
             console.log("Error creating publicKey: ", err);
             return new Response('Invalid "account" provided', {
                 status: 400,
-                headers: getHeaders(),
+                headers: headers,
             });
         }
 
@@ -170,7 +196,7 @@ export const POST = async (req: Request) => {
         });
 
         return Response.json(payload, {
-            headers: getHeaders(),
+            headers,
         });
     } catch (err) {
         return new Response('Internal server error: ' + JSON.stringify(err), {

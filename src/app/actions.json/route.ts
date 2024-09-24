@@ -1,4 +1,4 @@
-import { ACTIONS_CORS_HEADERS, ActionsJson } from "@solana/actions";
+import { ActionsJson, createActionHeaders } from "@solana/actions";
 
 export const GET = async () => {
     const payload: ActionsJson = {
@@ -17,10 +17,8 @@ export const GET = async () => {
     };
 
     return Response.json(payload, {
-        headers: ACTIONS_CORS_HEADERS,
+        headers: createActionHeaders(),
     });
 };
 
-// DO NOT FORGET TO INCLUDE THE `OPTIONS` HTTP METHOD
-// THIS WILL ENSURE CORS WORKS FOR BLINKS
 export const OPTIONS = GET;
