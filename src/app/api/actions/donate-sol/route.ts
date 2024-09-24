@@ -103,7 +103,6 @@ export const GET = async (req: Request) => {
 
     try {
         const requestUrl = new URL(req.url);
-        const toPubkey = getPublicKey();
 
         const baseHref = new URL(
             `/api/actions/donate-sol?`,
@@ -152,7 +151,7 @@ export const GET = async (req: Request) => {
 
     } catch (err) {
         console.error("Error getting request:", err);
-        let actionError: ActionError = { message: "An unknown error occurred" };
+        const actionError: ActionError = { message: "An unknown error occurred" };
         if (typeof err == "string") actionError.message = err;
         return Response.json(actionError, {
             status: 400,
