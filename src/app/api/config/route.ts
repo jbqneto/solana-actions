@@ -28,6 +28,7 @@ export const GET = async (req: Request) => {
     const pubKey = process.env.PUBLIC_KEY;
 
     return Response.json({
+        url: req.url,
         chain: process.env.CHAIN,
         publicKey: pubKey,
         amount: await getBalance(pubKey)
