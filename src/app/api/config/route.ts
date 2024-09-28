@@ -1,4 +1,5 @@
-import { Solana } from "@/app/domain/util";
+
+import { Solana } from "@/app/domain/util/solana";
 import { ACTIONS_CORS_HEADERS } from "@solana/actions";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 

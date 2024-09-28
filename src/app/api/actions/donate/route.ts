@@ -1,5 +1,5 @@
-import { Solana } from "@/app/domain/util";
 import { DonateConstants } from "@/app/domain/util/constants";
+import { Solana } from "@/app/domain/util/solana";
 import {
     ActionError,
     ActionGetResponse,
