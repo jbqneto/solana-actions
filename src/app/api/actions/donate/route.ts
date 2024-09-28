@@ -1,4 +1,5 @@
 import { Solana } from "@/app/domain/util";
+import { DonateConstants } from "@/app/domain/util/constants";
 import {
     ActionError,
     ActionGetResponse,
@@ -21,9 +22,6 @@ function getHeaders() {
 }
 
 const headers = getHeaders();
-
-//https://ibb.co/R3jvp8t
-const ICON_URL = 'https://i.ibb.co/McB2DdK/cartoon-donate-sol-please.jpg';
 
 function getPublicKey(pubKey: string | undefined): PublicKey {
     if (!pubKey) throw Error("Public key not defined on your env");
@@ -97,11 +95,13 @@ export const GET = async (req: Request) => {
             requestUrl.origin,
         ).toString();
 
+        const iconUrl = new URL(DonateConstants.icon, requestUrl.origin);
+
         const payload: ActionGetResponse = {
-            title: "JBQNETO - Doar SOL",
-            icon: ICON_URL,
-            description: "Me dê um pouquinho de SOL pra eu tomar meu café.",
-            label: "Doar SOL",
+            title: DonateConstants.title,
+            icon: iconUrl.toString(),
+            description: DonateConstants.description,
+            label: DonateConstants.label,
             links: {
                 actions: [
                     {
