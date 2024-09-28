@@ -1,3 +1,4 @@
+import { Solana } from "@/app/domain/util";
 import {
     ActionError,
     ActionGetResponse,
@@ -6,7 +7,7 @@ import {
     createActionHeaders,
     createPostResponse
 } from "@solana/actions";
-import { clusterApiUrl, Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import { Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 
 function getHeaders() {
     const chainId = process.env.CHAIN ?? null;
@@ -24,23 +25,10 @@ const headers = getHeaders();
 //https://ibb.co/R3jvp8t
 const ICON_URL = 'https://i.ibb.co/McB2DdK/cartoon-donate-sol-please.jpg';
 
-function getPublicKey(): PublicKey {
-    const pubKey = process.env.PUB_KEY;
-
+function getPublicKey(pubKey: string | undefined): PublicKey {
     if (!pubKey) throw Error("Public key not defined on your env");
 
     return new PublicKey(pubKey);
-}
-
-function getClusterUrl(chain: string): string {
-    switch (chain) {
-        case 'testnet':
-            return clusterApiUrl('testnet');
-        case 'mainnet':
-            return clusterApiUrl('mainnet-beta');
-        default:
-            return clusterApiUrl('devnet');
-    }
 }
 
 function getConnection(): Connection {
@@ -48,9 +36,9 @@ function getConnection(): Connection {
     const chain: string = process.env.CHAIN ?? 'devnet';
 
     if (url) {
-        url = url.startsWith('http') ? url : getClusterUrl(chain);
+        url = url.startsWith('http') ? url : Solana.getClusterUrl(chain);
     } else {
-        url = getClusterUrl(chain);
+        url = Solana.getClusterUrl(chain);
     }
 
     return new Connection(url);
@@ -76,25 +64,25 @@ async function getTransaction(conn: Connection, from: PublicKey, amount: number,
 }
 
 function validatedQueryAndGetParams(requestUrl: URL) {
-    const toPubkey = getPublicKey();
 
     let amount: number = 0.02;
 
     try {
-        if (requestUrl.searchParams.get('amount')) {
-            amount = parseFloat(requestUrl.searchParams.get('amount')!);
+        console.log("Url: ", requestUrl);
+        const urlAmount = requestUrl.searchParams.get('amount');
+        if (urlAmount) {
+            amount = parseFloat(urlAmount);
         }
 
-        if (amount <= 0.02) throw 'amount is too small';
+        if (amount < 0.02) throw 'amount is too small: ' + amount;
 
     } catch (err) {
-        console.log("Error: ", err);
+        console.log("Error getting amount: ", err);
         throw 'Invalid input query parameter: amount';
     }
 
     return {
-        amount,
-        toPubkey,
+        amount
     };
 }
 
@@ -105,7 +93,7 @@ export const GET = async (req: Request) => {
         const requestUrl = new URL(req.url);
 
         const baseHref = new URL(
-            `/api/actions/donate-sol?`,
+            `/api/actions/donate?`,
             requestUrl.origin,
         ).toString();
 
@@ -166,8 +154,12 @@ export const OPTIONS = GET;
 export const POST = async (req: Request) => {
     try {
         const requestUrl = new URL(req.url);
-        const { amount, toPubkey } = validatedQueryAndGetParams(requestUrl);
+        const toPubkey = getPublicKey(process.env.PUBLIC_KEY);
+        console.log("url: " + requestUrl);
+        const { amount } = validatedQueryAndGetParams(requestUrl);
         const body: ActionPostRequest = await req.json();
+
+        console.log("body: ", body);
 
         // validate the client provided input
         let account: PublicKey;
@@ -185,12 +177,10 @@ export const POST = async (req: Request) => {
 
         const transaction = await getTransaction(connection, account, amount, toPubkey);
 
-        // insert transaction logic here    
-
         const payload: ActionPostResponse = await createPostResponse({
             fields: {
                 transaction,
-                message: "Optional message to include with transaction",
+                message: "Com esse 'SOLzinho' posso tomar mais um cafezinho. Thanks my friend! :)",
             },
         });
 
