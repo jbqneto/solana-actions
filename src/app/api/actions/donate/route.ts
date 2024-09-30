@@ -50,7 +50,7 @@ async function getTransaction(conn: Connection, from: PublicKey, amount: number,
         })
     );
 
-    const ltBlockhash = await conn.getLatestBlockhash();
+    const ltBlockhash = await conn.getLatestBlockhash('confirmed');
 
     transaction.feePayer = from;
     transaction.recentBlockhash = ltBlockhash.blockhash;
@@ -129,7 +129,7 @@ export const GET = async (req: Request) => {
                         // no `parameters` therefore not a text input field
                     },
                     {
-                        "label": "Donate", // button text
+                        "label": "Doar", // button text
                         "href": baseHref + "amount={amount}",
                         "parameters": [
                             {
@@ -187,6 +187,12 @@ export const POST = async (req: Request) => {
         const connection = getConnection(cluster);
 
         const transaction = await getTransaction(connection, account, amount, toPubkey);
+
+        connection.simulateTransaction(transaction).then((res) => {
+            console.log("simulation res", res);
+        }).catch((err) => {
+            console.error("Error on simulation: ", err);
+        })
 
         const payload: ActionPostResponse = await createPostResponse({
             fields: {
