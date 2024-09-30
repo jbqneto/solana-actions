@@ -3,11 +3,16 @@
 import { DonateConstants } from "@/app/domain/util/constants";
 import { AlertCircle } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "../card";
+import { usePathname } from 'next/navigation';
+import { useEffect, useState } from "react";
+import { Card, CardButton, CardContent } from "../card";
+
+import './home-card.css';
+
+const DIAL_URL = 'https://dial.to/?action=solana-action';
 
 const WarningLabel = ({ show }: { show: boolean }) => (
-    <div className={`flex items-center p-0.5 mt-2 text-yellow-400 ${show ? '' : 'hidden'}`}>
+    <div className={`card-warn flex items-center p-0.5 mt-2 text-yellow-400 ${show ? '' : 'hidden'}`}>
         <AlertCircle className="w-5 h-5 mr-2" />
         <span>Atenção: Você está em MAIN-NET e qualquer transação confirmada será pra valer.</span>
     </div>
@@ -23,32 +28,55 @@ const NetworkSelect = ({ value, onChange }: { value: string, onChange: (value: s
         <option value="mainnet">Main Net</option>
     </select>
 )
+//https://dial.to/?action=solana-action%3Ahttp%3A%2F%2Flocalhost%3A3000%2Fapi%2Factions%2Fdonate&cluster=devnet
 
-export function HomeCard() {
-    const [network, setNetwork] = useState('devnet');
+function encodeUrl(url: string) {
+    // Codifica a URL usando encodeURIComponent
+    const encodedUrl = encodeURIComponent(url);
+
+    // Adiciona o caractere ':' no início (se necessário)
+    return encodedUrl;
+}
+
+export function HomeCard({ className }: { className?: string }) {
+    const [cluster, setCluster] = useState('devnet');
+    const [host, setHost] = useState('');
+    const pathname = usePathname();
+
+    const handleDonate = () => {
+        const url = encodeUrl(`:${host}/api/actions/donate`);
+
+        window.open(DIAL_URL + url + `&cluster=${cluster}`, '_blank');
+    }
+
+    useEffect(() => {
+        console.log("pathname: ", pathname);
+        console.log(window.location);
+        setHost(window.location.origin);
+    }, []);
 
     return (
-        <Card className="w-full max-w-md mx-auto bg-gray-800 text-gray-100">
+        <Card className={`bg-gray-800 rounded-lg shadow-lg ${className}`}>
             <div className="bg-gray-700 px-6 py-4 flex justify-between items-center">
-                <h1 className="text-xl font-bold text-gray-100">Network Dashboard</h1>
-                <NetworkSelect value={network} onChange={setNetwork} />
+                <h1 className="text-xl font-bold text-gray-100">Selecione a rede</h1>
+                <NetworkSelect value={cluster} onChange={setCluster} />
             </div>
-            <WarningLabel show={network === 'mainnet'} />
+            <WarningLabel show={cluster === 'mainnet'} />
             <Image
                 src={DonateConstants.icon}
                 alt="Sad man begging for some SOLANA"
-                width={400}
-                height={200}
+                width={300}
+                height={100}
                 className="w-full object-cover"
             />
-            <CardHeader>
-                <CardTitle className="text-center text-gray-100">{DonateConstants.title}</CardTitle>
-            </CardHeader>
             <CardContent>
                 <p className="text-center text-gray-300">
                     {DonateConstants.description}
                 </p>
             </CardContent>
+            <div className="card-footer mt-auto px-4 py-2 bg-gray-700">
+                <CardButton onClick={handleDonate}>Abrir blink</CardButton>
+            </div>
         </Card>
     )
 

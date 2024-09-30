@@ -10,10 +10,11 @@ import {
 } from "@solana/actions";
 import { Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 
-function getHeaders() {
-    const chainId = process.env.CHAIN ?? null;
+function getHeaders(chainId?: string) {
 
-    if (!chainId) throw new Error("Chain not defined on your ENV.");
+    if (chainId && !['devnet', 'mainnet', 'testnet'].includes(chainId)) {
+        throw Error("Invalid cluster: " + chainId);
+    }
 
     return createActionHeaders({
         chainId,
@@ -21,17 +22,14 @@ function getHeaders() {
     });
 }
 
-const headers = getHeaders();
-
 function getPublicKey(pubKey: string | undefined): PublicKey {
     if (!pubKey) throw Error("Public key not defined on your env");
 
     return new PublicKey(pubKey);
 }
 
-function getConnection(): Connection {
+function getConnection(chain: string = 'devnet'): Connection {
     let url = process.env.SOLANA_RPC;
-    const chain: string = process.env.CHAIN ?? 'devnet';
 
     if (url) {
         url = url.startsWith('http') ? url : Solana.getClusterUrl(chain);
@@ -64,12 +62,19 @@ async function getTransaction(conn: Connection, from: PublicKey, amount: number,
 function validatedQueryAndGetParams(requestUrl: URL) {
 
     let amount: number = 0.02;
+    let cluster: string | undefined | null = process.env.CHAIN;
 
     try {
         console.log("Url: ", requestUrl);
         const urlAmount = requestUrl.searchParams.get('amount');
+        cluster = requestUrl.searchParams.get("cluster");
+
         if (urlAmount) {
             amount = parseFloat(urlAmount);
+        }
+
+        if (!cluster) {
+            cluster = 'devnet';
         }
 
         if (amount < 0.02) throw 'amount is too small: ' + amount;
@@ -80,12 +85,16 @@ function validatedQueryAndGetParams(requestUrl: URL) {
     }
 
     return {
-        amount
+        amount,
+        cluster
     };
 }
 
 export const GET = async (req: Request) => {
     console.log("REQ URl: " + req.url);
+    const url = new URL(req.url);
+    const cluster = process.env.CHAIN ?? 'mainnet';
+    const headers = getHeaders(cluster);
 
     try {
         const requestUrl = new URL(req.url);
@@ -105,9 +114,8 @@ export const GET = async (req: Request) => {
             links: {
                 actions: [
                     {
-                        "label": "0.02 SOL", // button text
+                        "label": "0.02 SOL",
                         "href": baseHref + "amount=0.02"
-                        // no `parameters` therefore not a text input field
                     },
                     {
                         "label": "0.05 SOL", // button text
@@ -125,7 +133,7 @@ export const GET = async (req: Request) => {
                         "parameters": [
                             {
                                 "name": "amount", // field name
-                                "label": "Doe o quanto o seu coração mandar e sua wallet deixar :)" // text input placeholder
+                                "label": "Doe o quanto o coração mandar :)" // text input placeholder
                             }
                         ]
                     }
@@ -156,7 +164,7 @@ export const POST = async (req: Request) => {
         const requestUrl = new URL(req.url);
         const toPubkey = getPublicKey(process.env.PUBLIC_KEY);
         console.log("url: " + requestUrl);
-        const { amount } = validatedQueryAndGetParams(requestUrl);
+        const { amount, cluster } = validatedQueryAndGetParams(requestUrl);
         const body: ActionPostRequest = await req.json();
 
         console.log("body: ", body);
@@ -169,7 +177,7 @@ export const POST = async (req: Request) => {
             console.log("Error creating publicKey: ", err);
             return new Response('Invalid "account" provided', {
                 status: 400,
-                headers: headers,
+                headers: getHeaders(cluster),
             });
         }
 
@@ -180,7 +188,7 @@ export const POST = async (req: Request) => {
         const payload: ActionPostResponse = await createPostResponse({
             fields: {
                 transaction,
-                message: "Com esse 'SOLzinho' posso tomar mais um cafezinho. Thanks my friend! :)",
+                message: "Com esse 'SOLzinho' posso comprar  mais um cafezinho. Thanks my friend! :)",
             },
         });
 
