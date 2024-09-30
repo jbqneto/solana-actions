@@ -13,7 +13,7 @@ import { Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } f
 function getHeaders(chainId?: string) {
 
     if (chainId && !['devnet', 'mainnet', 'testnet'].includes(chainId)) {
-        throw Error("Invalid cluster: " + chainId);
+        throw "Invalid cluster: " + chainId;
     }
 
     return createActionHeaders({
@@ -59,6 +59,7 @@ async function getTransaction(conn: Connection, from: PublicKey, amount: number,
     return transaction;
 }
 
+
 function validatedQueryAndGetParams(requestUrl: URL) {
 
     let amount: number = 0.02;
@@ -93,14 +94,14 @@ function validatedQueryAndGetParams(requestUrl: URL) {
 export const GET = async (req: Request) => {
     console.log("REQ URl: " + req.url);
     const url = new URL(req.url);
-    const cluster = process.env.CHAIN ?? 'mainnet';
-    const headers = getHeaders(cluster);
+    const cluster = url.searchParams.get('cluster') ?? process.env.CHAIN ?? 'mainnet';
 
     try {
+        const headers = getHeaders(cluster);
         const requestUrl = new URL(req.url);
 
         const baseHref = new URL(
-            `/api/actions/donate?`,
+            `/api/actions/donate?cluster=${cluster}&`,
             requestUrl.origin,
         ).toString();
 
@@ -147,11 +148,12 @@ export const GET = async (req: Request) => {
 
     } catch (err) {
         console.error("Error getting request:", err);
-        const actionError: ActionError = { message: "An unknown error occurred" };
+        const error = typeof err === 'string' ? err : "An unknown error occurred";
+        const actionError: ActionError = { message: error };
         if (typeof err == "string") actionError.message = err;
         return Response.json(actionError, {
             status: 400,
-            headers,
+            headers: getHeaders(),
         });
     }
 
