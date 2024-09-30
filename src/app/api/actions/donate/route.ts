@@ -49,12 +49,19 @@ function getConnection(chain: string = 'devnet'): Connection {
     return new Connection(url);
 }
 
-async function getTransaction(conn: Connection, from: PublicKey, amount: number, to: PublicKey): Promise<Transaction> {
+async function getTransaction(conn: Connection, from: PublicKey, amount: number, toPubkey: PublicKey): Promise<Transaction> {
+    const minimumBalance = await conn.getMinimumBalanceForRentExemption(0);
+
+    if (amount * LAMPORTS_PER_SOL < minimumBalance) {
+        throw `Conta não pode ser isenta de aluguel: ${toPubkey.toBase58()}`;
+    }
+
     const transaction = new Transaction();
+
     transaction.add(
         SystemProgram.transfer({
             fromPubkey: from,
-            toPubkey: to,
+            toPubkey,
             lamports: amount * LAMPORTS_PER_SOL
         })
     );
@@ -123,26 +130,25 @@ export const GET = async (req: Request) => {
             links: {
                 actions: [
                     {
-                        "label": "0.02 SOL",
-                        "href": baseHref + "amount=0.02"
+                        label: "0.02 SOL",
+                        href: baseHref + "amount=0.02"
                     },
                     {
-                        "label": "0.05 SOL", // button text
-                        "href": baseHref + "amount=0.05"
-                        // no `parameters` therefore not a text input field
+                        label: "0.05 SOL", // button text
+                        href: baseHref + "amount=0.05"
                     },
                     {
-                        "label": "0.1 SOL", // button text
-                        "href": baseHref + "amount=0.1"
-                        // no `parameters` therefore not a text input field
+                        label: "0.1 SOL", // button text
+                        href: baseHref + "amount=0.1"
                     },
                     {
-                        "label": "Doar", // button text
-                        "href": baseHref + "amount={amount}",
-                        "parameters": [
+                        label: "Doar", // button text
+                        href: baseHref + "amount={amount}",
+                        parameters: [
                             {
-                                "name": "amount", // field name
-                                "label": "Doe o quanto o coração mandar :)" // text input placeholder
+                                name: "amount",
+                                label: "Doe o quanto o coração mandar :)",
+                                required: true
                             }
                         ]
                     }
@@ -204,7 +210,7 @@ export const POST = async (req: Request) => {
         const payload: ActionPostResponse = await createPostResponse({
             fields: {
                 transaction,
-                message: "Que a força do café esteja com você. Thanks my friend! :)",
+                message: `Enviando ${amount} SOL para ${toPubkey.toBase58()}`,
             },
         });
 
