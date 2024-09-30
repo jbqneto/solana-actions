@@ -75,7 +75,6 @@ function validatedQueryAndGetParams(requestUrl: URL) {
     let cluster: string | undefined | null = process.env.CHAIN;
 
     try {
-        console.log("Url: ", requestUrl);
         const urlAmount = requestUrl.searchParams.get('amount');
         cluster = requestUrl.searchParams.get("cluster");
 
@@ -173,19 +172,19 @@ export const OPTIONS = GET;
 export const POST = async (req: Request) => {
     try {
         const requestUrl = new URL(req.url);
-        console.log("url: " + requestUrl);
         const { amount, cluster } = validatedQueryAndGetParams(requestUrl);
         const headers = getHeaders(cluster);
         const body: ActionPostRequest = await req.json();
         const toPubkey = getPublicKey(cluster);
-        console.log("body: ", body);
+
+        console.log(`${cluster} - to: ${toPubkey.toBase58()} - url:  ${requestUrl}`);
 
         // validate the client provided input
         let account: PublicKey;
         try {
             account = new PublicKey(body.account);
         } catch (err) {
-            console.log("Error creating publicKey: ", err);
+            console.error("Error creating publicKey: ", err);
             return new Response('Invalid "account" provided', {
                 status: 400,
                 headers,
