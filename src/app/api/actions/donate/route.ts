@@ -167,6 +167,7 @@ export const POST = async (req: Request) => {
         const toPubkey = getPublicKey(process.env.PUBLIC_KEY);
         console.log("url: " + requestUrl);
         const { amount, cluster } = validatedQueryAndGetParams(requestUrl);
+        const headers = getHeaders(cluster);
         const body: ActionPostRequest = await req.json();
 
         console.log("body: ", body);
@@ -179,7 +180,7 @@ export const POST = async (req: Request) => {
             console.log("Error creating publicKey: ", err);
             return new Response('Invalid "account" provided', {
                 status: 400,
-                headers: getHeaders(cluster),
+                headers,
             });
         }
 
@@ -190,7 +191,7 @@ export const POST = async (req: Request) => {
         const payload: ActionPostResponse = await createPostResponse({
             fields: {
                 transaction,
-                message: "Com esse 'SOLzinho' posso comprar  mais um cafezinho. Thanks my friend! :)",
+                message: "Que a força do café esteja com você. Thanks my friend! :)",
             },
         });
 
