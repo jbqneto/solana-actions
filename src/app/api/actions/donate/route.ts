@@ -9,6 +9,7 @@ import {
     createPostResponse
 } from "@solana/actions";
 import { Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import * as wallets from '../../../config/wallets.json';
 
 function getHeaders(chainId?: string) {
 
@@ -23,9 +24,17 @@ function getHeaders(chainId?: string) {
 }
 
 function getPublicKey(pubKey: string | undefined): PublicKey {
-    if (!pubKey) throw Error("Public key not defined on your env");
+    if (!pubKey) throw Error("Public key not defined");
 
-    return new PublicKey(pubKey);
+    switch (pubKey) {
+        case 'devnet':
+            return new PublicKey(wallets.devnet);
+        case 'mainnet':
+            return new PublicKey(wallets.mainnet);
+        default:
+            return new PublicKey(pubKey);
+    }
+
 }
 
 function getConnection(chain: string = 'devnet'): Connection {
@@ -164,12 +173,11 @@ export const OPTIONS = GET;
 export const POST = async (req: Request) => {
     try {
         const requestUrl = new URL(req.url);
-        const toPubkey = getPublicKey(process.env.PUBLIC_KEY);
         console.log("url: " + requestUrl);
         const { amount, cluster } = validatedQueryAndGetParams(requestUrl);
         const headers = getHeaders(cluster);
         const body: ActionPostRequest = await req.json();
-
+        const toPubkey = getPublicKey(cluster);
         console.log("body: ", body);
 
         // validate the client provided input
