@@ -184,7 +184,7 @@ export const POST = async (req: Request) => {
             });
         }
 
-        const connection = getConnection();
+        const connection = getConnection(cluster);
 
         const transaction = await getTransaction(connection, account, amount, toPubkey);
 
