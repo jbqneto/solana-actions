@@ -49,30 +49,36 @@ function getConnection(chain: string = 'devnet'): Connection {
     return new Connection(url);
 }
 
-async function getTransaction(conn: Connection, from: PublicKey, amount: number, toPubkey: PublicKey): Promise<Transaction> {
+async function getTransaction(conn: Connection, fromPubkey: PublicKey, amount: number, toPubkey: PublicKey): Promise<Transaction> {
     const minimumBalance = await conn.getMinimumBalanceForRentExemption(0);
 
     if (amount * LAMPORTS_PER_SOL < minimumBalance) {
         throw `Conta não pode ser isenta de aluguel: ${toPubkey.toBase58()}`;
     }
 
-    const transaction = new Transaction();
+    const transferSolInstruction = SystemProgram.transfer({
+        fromPubkey,
+        toPubkey,
+        lamports: amount * LAMPORTS_PER_SOL,
+    });
 
-    transaction.add(
+    const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
+
+    // create a legacy transaction
+    const transaction = new Transaction({
+        feePayer: fromPubkey,
+        blockhash,
+        lastValidBlockHeight,
+    }).add(transferSolInstruction);
+
+
+    return transaction.add(
         SystemProgram.transfer({
-            fromPubkey: from,
+            fromPubkey: fromPubkey,
             toPubkey,
             lamports: amount * LAMPORTS_PER_SOL
         })
-    );
-
-    const ltBlockhash = await conn.getLatestBlockhash('confirmed');
-
-    transaction.feePayer = from;
-    transaction.recentBlockhash = ltBlockhash.blockhash;
-    transaction.lastValidBlockHeight = ltBlockhash.lastValidBlockHeight;
-
-    return transaction;
+    );;
 }
 
 
