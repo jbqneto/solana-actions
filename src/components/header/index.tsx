@@ -5,11 +5,6 @@ import { AlertCircle } from "lucide-react";
 
 import './header.css';
 
-type Input = {
-    cluster: string,
-    setCluster: (cluster: string) => void
-}
-
 const WarningLabel = ({ show }: { show: boolean }) => (
     <div className={`card-warn items-center p-0.5 mt-2`}>
         <div className={`msg flex text-yellow-400 ${show ? '' : 'hidden'}`}>

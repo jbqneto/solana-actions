@@ -2,7 +2,6 @@
 
 import { DonateConstants } from "@/app/domain/util/constants";
 import Image from "next/image";
-import { usePathname } from 'next/navigation';
 import { useEffect, useState } from "react";
 import { Card, CardButton, CardContent } from "../card";
 
@@ -24,7 +23,6 @@ function encodeUrl(url: string) {
 export function HomeCard({ className }: { className?: string }) {
     const [host, setHost] = useState('');
     const { cluster } = useClusterContext();
-    const pathname = usePathname();
 
     const handleDonate = () => {
         const url = encodeUrl(`:${host}/api/actions/donate`) + `&cluster=${cluster}`;
@@ -35,7 +33,6 @@ export function HomeCard({ className }: { className?: string }) {
     }
 
     useEffect(() => {
-        console.log("pathname: ", pathname);
         console.log(window.location);
         setHost(window.location.origin);
     }, []);
