@@ -3,6 +3,6 @@
 export const DonateConstants = {
     title: 'JBQNETO - Doar SOL',
     icon: '/donate.jpg',
-    description: 'Eu podia tá matando, roubando, me candidatando, mas tô aqui pedindo um SOLzinho pra comprar um cafézinho. :)',
+    description: 'Ajude o programador a comprar café, me dõe um SOLzinho ai. :P',
     label: "Doar SOL",
 }
