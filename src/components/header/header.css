@@ -1,0 +1,14 @@
+header .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+header .card-warn {
+    min-height: 24px;
+}
+
+header .msg {
+    text-align: center;
+    justify-content: center;
+}
