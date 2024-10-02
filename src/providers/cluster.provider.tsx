@@ -11,7 +11,7 @@ type IClusterContext = {
 
 const ClusterContext = createContext<IClusterContext>({
     cluster: process.env.CHAIN ?? 'devnet',
-    setCluster: (cluster: string) => { console.log(cluster) }
+    setCluster: (cluster: string) => { console.log("selected cluster: " + cluster); }
 });
 
 const useClusterContext = () => {
